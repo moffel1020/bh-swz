@@ -121,7 +121,7 @@ func main() {
 	// const key uint32 = 135547110
 
 	a := app.New()
-	w := a.NewWindow("swz converter")
+	w := a.NewWindow("bh-swz")
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Decrypt", makeDecryptContainer(&w)),

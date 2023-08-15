@@ -24,13 +24,13 @@ func DecryptFile(file string, key uint32) {
 	newData := Decrypt(input, key)
 	fmt.Println("total files:", len(newData))
 
-	for i, v := range newData {
+	for _, v := range newData {
 		var fileName string
 		if v[0] == '<' {
 			if v[0:10] == "<LevelDesc" {
 				fileName = strings.Split(strings.Split(v, "LevelName=\"")[1], "\"")[0] + ".xml"
 			} else {
-				fileName = "unknown" + fmt.Sprint(i) + ".xml"
+				fileName = strings.TrimPrefix(strings.Split(v, ">")[0], "<") + ".xml"
 			}
 		} else {
 			fileName = strings.Split(v, "\n")[0] + ".csv"
