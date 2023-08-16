@@ -2,6 +2,7 @@
 patch 7.11 key: 135547110
 
 ## download
+### make sure to run the game with -noeac launch option just to be safe
 download the latest release [here](https://github.com/moffel1020/bh-swz/releases)
 
 ## building
