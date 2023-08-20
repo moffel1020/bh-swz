@@ -16,6 +16,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const keyPrefName string = "key"
+
 func makeDecryptContainer(w *fyne.Window) *fyne.Container {
 	path := widget.NewLabel("No file selected")
 
@@ -39,6 +41,7 @@ func makeDecryptContainer(w *fyne.Window) *fyne.Container {
 
 	keyLabel := widget.NewLabel("key:")
 	keyEntry := widget.NewEntry()
+	keyEntry.SetText(fyne.CurrentApp().Preferences().String(keyPrefName))
 
 	fileSelect := container.NewGridWithColumns(2, path, pickFile)
 	keyInput := container.NewGridWithColumns(2, keyLabel, keyEntry)
@@ -56,6 +59,7 @@ func makeDecryptContainer(w *fyne.Window) *fyne.Container {
 			return
 		}
 
+		fyne.CurrentApp().Preferences().SetString(keyPrefName, keyEntry.Text)
 		fmt.Println("decrypting: " + path.Text)
 		fmt.Println("with key: " + fmt.Sprint(key))
 		swz.DecryptFile(path.Text, key)
@@ -88,6 +92,7 @@ func makeEncryptContainer(w *fyne.Window) *fyne.Container {
 
 	keyLabel := widget.NewLabel("key:")
 	keyEntry := widget.NewEntry()
+	keyEntry.SetText(fyne.CurrentApp().Preferences().String(keyPrefName))
 
 	folderSelect := container.NewGridWithColumns(2, path, pickFolder)
 	keyInput := container.NewGridWithColumns(2, keyLabel, keyEntry)
@@ -107,6 +112,7 @@ func makeEncryptContainer(w *fyne.Window) *fyne.Container {
 			return
 		}
 
+		fyne.CurrentApp().Preferences().SetString(keyPrefName, keyEntry.Text)
 		fmt.Println("encrypting: " + path.Text)
 		fmt.Println("with key: " + fmt.Sprint(key))
 		swz.EncryptToFile(path.Text+".swz", key, 0)
@@ -120,7 +126,7 @@ func makeEncryptContainer(w *fyne.Window) *fyne.Container {
 func main() {
 	// const key uint32 = 135547110
 
-	a := app.New()
+	a := app.NewWithID("com.moffel.swz")
 	w := a.NewWindow("bh-swz")
 
 	tabs := container.NewAppTabs(
