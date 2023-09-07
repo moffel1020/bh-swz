@@ -1,7 +1,7 @@
 # bh-swz
 brawlhalla patch: key
-7.12: 887927120
-7.11: 135547110
+- 7.12: 887927120
+- 7.11: 135547110
 
 ## download
 ### make sure to run the game with -noeac launch option just to be safe
