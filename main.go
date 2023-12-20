@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,7 +29,6 @@ func makeDecryptContainer(w *fyne.Window) *fyne.Container {
 				return
 			}
 			if reader == nil {
-				fmt.Println("canceled file selection")
 				return
 			}
 
@@ -49,21 +49,23 @@ func makeDecryptContainer(w *fyne.Window) *fyne.Container {
 	decryptButton := widget.NewButton("decrypt", func() {
 		k, err := strconv.ParseUint(keyEntry.Text, 10, 32)
 		if err != nil {
-			fmt.Println(err)
+			dialog.ShowError(err, *w)
 			return
 		}
 		key := uint32(k)
 
 		if filepath.Ext(path.Text) != ".swz" {
-			fmt.Println("invalid file")
+			dialog.ShowError(errors.New("invalid .swz file"), *w)
 			return
 		}
 
 		fyne.CurrentApp().Preferences().SetString(keyPrefName, keyEntry.Text)
 		fmt.Println("decrypting: " + path.Text)
 		fmt.Println("with key: " + fmt.Sprint(key))
-		swz.DecryptFile(path.Text, key)
-		fmt.Println("finished")
+		if err = swz.DecryptFile(path.Text, key); err != nil {
+			dialog.ShowError(err, *w)
+			return
+		}
 	})
 
 	decryptContainer := container.NewVBox(fileSelect, keyInput, decryptButton)
@@ -100,7 +102,7 @@ func makeEncryptContainer(w *fyne.Window) *fyne.Container {
 	encryptButton := widget.NewButton("encrypt", func() {
 		k, err := strconv.ParseUint(keyEntry.Text, 10, 32)
 		if err != nil {
-			fmt.Println(err)
+			dialog.ShowError(err, *w)
 			return
 		}
 
@@ -108,15 +110,17 @@ func makeEncryptContainer(w *fyne.Window) *fyne.Container {
 
 		_, err = os.Stat(path.Text)
 		if err != nil {
-			fmt.Println("invalid folder")
+			dialog.ShowError(err, *w)
 			return
 		}
 
 		fyne.CurrentApp().Preferences().SetString(keyPrefName, keyEntry.Text)
 		fmt.Println("encrypting: " + path.Text)
 		fmt.Println("with key: " + fmt.Sprint(key))
-		swz.EncryptToFile(path.Text, key, 0)
-		fmt.Println("finished")
+		if err = swz.EncryptToFile(path.Text, key, 0); err != nil {
+			dialog.ShowError(err, *w)
+			return
+		}
 	})
 
 	decryptContainer := container.NewVBox(folderSelect, keyInput, encryptButton)

@@ -3,6 +3,7 @@ package swz
 import (
 	"bytes"
 	"compress/zlib"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,17 +11,21 @@ import (
 	"strings"
 )
 
-func DecryptFile(file string, key uint32) {
+func DecryptFile(file string, key uint32) error {
 	input, err := os.ReadFile(file)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	swzName := strings.TrimSuffix(filepath.Base(file), filepath.Ext(file))
 
 	os.MkdirAll(filepath.Join("dump", swzName), os.ModePerm)
 
-	data := Decrypt(input, key)
+	data, err := Decrypt(input, key)
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("total files:", len(data))
 
 	dest := filepath.Join("dump", swzName)
@@ -29,9 +34,11 @@ func DecryptFile(file string, key uint32) {
 		fileName := getFileName(v)
 		os.WriteFile(filepath.Join(dest, fileName), []byte(v), os.ModePerm)
 	}
+
+	return nil
 }
 
-func Decrypt(input []byte, key uint32) []string {
+func Decrypt(input []byte, key uint32) ([]string, error) {
 	reader := bytes.NewReader(input)
 
 	checksum := readUint32BE(reader)
@@ -49,7 +56,7 @@ func Decrypt(input []byte, key uint32) []string {
 	}
 
 	if hash != checksum {
-		panic("hash is not equal to checksum")
+		return nil, errors.New("Hash not equal to checksum. Is the decryption key correct?")
 	}
 
 	results := make([]string, 0)
@@ -60,14 +67,14 @@ func Decrypt(input []byte, key uint32) []string {
 			if err == io.EOF {
 				break
 			} else {
-				panic(err)
+				return results, err
 			}
 		}
 
 		results = append(results, text)
 	}
 
-	return results
+	return results, nil
 }
 
 func getFileName(content string) string {
@@ -94,7 +101,7 @@ func readStringEntry(reader *bytes.Reader, rand *prng) (string, error) {
 	buffer := make([]byte, compressedSize)
 	_, err := reader.Read(buffer)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	hash := rand.nextUint()
@@ -107,13 +114,13 @@ func readStringEntry(reader *bytes.Reader, rand *prng) (string, error) {
 	}
 
 	if hash != checksum {
-		panic("hash is not equal to checksum")
+		return "", errors.New("Hash not equal to checksum. Is the decryption key correct?")
 	}
 
 	text := new(strings.Builder)
 	r, err := zlib.NewReader(bytes.NewBuffer(buffer))
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	io.Copy(text, r)
 	r.Close()

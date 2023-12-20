@@ -9,12 +9,12 @@ import (
 	"strings"
 )
 
-func EncryptToFile(dir string, key uint32, seed uint32) {
+func EncryptToFile(dir string, key uint32, seed uint32) error {
 	os.Mkdir("encrypt", os.ModePerm)
 
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	fileNames := make([]string, 0)
@@ -31,14 +31,20 @@ func EncryptToFile(dir string, key uint32, seed uint32) {
 		}
 	}
 
-	encrypted := Encrypt(key, seed, data)
+	fmt.Println("decrypting", len(fileNames), "files")
+	encrypted, err := Encrypt(key, seed, data)
+	if err != nil {
+		return err
+	}
 
 	dest := filepath.Join("encrypt", strings.TrimSuffix(filepath.Base(dir), filepath.Ext(dir))+".swz")
 	fmt.Println("writing to: " + dest)
 	os.WriteFile(dest, encrypted, os.ModePerm)
+
+	return nil
 }
 
-func Encrypt(key uint32, seed uint32, stringEntries []string) []byte {
+func Encrypt(key uint32, seed uint32, stringEntries []string) ([]byte, error) {
 	rand := newPrng(seed ^ key)
 
 	var hash uint32 = 0x2DF4A1CD
@@ -53,17 +59,19 @@ func Encrypt(key uint32, seed uint32, stringEntries []string) []byte {
 	writeUint32BE(buffer, seed)
 
 	for _, v := range stringEntries {
-		writeStringEntry([]byte(v), rand, buffer)
+		if err := writeStringEntry([]byte(v), rand, buffer); err != nil {
+			return buffer.Bytes(), err
+		}
 	}
 
-	return buffer.Bytes()
+	return buffer.Bytes(), nil
 }
 
-func writeStringEntry(input []byte, rand *prng, output *bytes.Buffer) {
+func writeStringEntry(input []byte, rand *prng, output *bytes.Buffer) error {
 	compressedInput := new(bytes.Buffer)
 	w, err := zlib.NewWriterLevel(compressedInput, zlib.BestCompression)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	w.Write(input)
 	w.Close()
@@ -84,6 +92,8 @@ func writeStringEntry(input []byte, rand *prng, output *bytes.Buffer) {
 	writeUint32BE(output, decompressedSize)
 	writeUint32BE(output, checksum)
 	output.Write(compressedInput.Bytes())
+
+	return nil
 }
 
 func writeUint32BE(buffer *bytes.Buffer, value uint32) {
