@@ -1,12 +1,7 @@
 # bh-swz
-brawlhalla patch: key
-- 8.00: 644158000
-- 7.13: 487327130
-- 7.12: 887927120
-- 7.11: 135547110
+program which encrypts and decrypts brawlhalla .swz files
 
 ## download
-### make sure to run the game with -noeac launch option just to be safe
 download the latest release [here](https://github.com/moffel1020/bh-swz/releases)
 
 ## building

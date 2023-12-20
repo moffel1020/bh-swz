@@ -9,12 +9,10 @@ import (
 	"strings"
 )
 
-func EncryptToFile(name string, key uint32, seed uint32) {
+func EncryptToFile(dir string, key uint32, seed uint32) {
 	os.Mkdir("encrypt", os.ModePerm)
 
-	swzName := strings.TrimSuffix(filepath.Base(name), filepath.Ext(name))
-
-	entries, err := os.ReadDir(filepath.Join("dump", swzName))
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		panic(err)
 	}
@@ -22,25 +20,26 @@ func EncryptToFile(name string, key uint32, seed uint32) {
 	fileNames := make([]string, 0)
 	for _, e := range entries {
 		if !e.IsDir() {
-			fileNames = append(fileNames, e.Name())
+			fileNames = append(fileNames, filepath.Join(dir, e.Name()))
 		}
 	}
 
 	data := make([]string, 0)
 	for _, f := range fileNames {
-		if d, err := os.ReadFile(filepath.Join("dump", swzName, f)); err == nil {
+		if d, err := os.ReadFile(f); err == nil {
 			data = append(data, string(d))
 		}
 	}
 
 	encrypted := Encrypt(key, seed, data)
 
-	fmt.Println("writing to: " + filepath.Join("encrypt", swzName+".swz"))
-	os.WriteFile(filepath.Join("encrypt", swzName+".swz"), encrypted, os.ModePerm)
+	dest := filepath.Join("encrypt", strings.TrimSuffix(filepath.Base(dir), filepath.Ext(dir))+".swz")
+	fmt.Println("writing to: " + dest)
+	os.WriteFile(dest, encrypted, os.ModePerm)
 }
 
 func Encrypt(key uint32, seed uint32, stringEntries []string) []byte {
-	rand := newWell512(seed ^ key)
+	rand := newPrng(seed ^ key)
 
 	var hash uint32 = 0x2DF4A1CD
 	hash_rounds := key%0x1F + 5
@@ -60,7 +59,7 @@ func Encrypt(key uint32, seed uint32, stringEntries []string) []byte {
 	return buffer.Bytes()
 }
 
-func writeStringEntry(input []byte, rand *well512, output *bytes.Buffer) {
+func writeStringEntry(input []byte, rand *prng, output *bytes.Buffer) {
 	compressedInput := new(bytes.Buffer)
 	w, err := zlib.NewWriterLevel(compressedInput, zlib.BestCompression)
 	if err != nil {

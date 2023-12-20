@@ -115,7 +115,7 @@ func makeEncryptContainer(w *fyne.Window) *fyne.Container {
 		fyne.CurrentApp().Preferences().SetString(keyPrefName, keyEntry.Text)
 		fmt.Println("encrypting: " + path.Text)
 		fmt.Println("with key: " + fmt.Sprint(key))
-		swz.EncryptToFile(path.Text+".swz", key, 0)
+		swz.EncryptToFile(path.Text, key, 0)
 		fmt.Println("finished")
 	})
 
@@ -124,8 +124,6 @@ func makeEncryptContainer(w *fyne.Window) *fyne.Container {
 }
 
 func main() {
-	// const key uint32 = 135547110
-
 	a := app.NewWithID("com.moffel.swz")
 	w := a.NewWindow("bh-swz")
 

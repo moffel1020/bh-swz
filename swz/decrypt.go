@@ -16,26 +16,18 @@ func DecryptFile(file string, key uint32) {
 		panic(err)
 	}
 
-	// name of file without extension or path
 	swzName := strings.TrimSuffix(filepath.Base(file), filepath.Ext(file))
 
 	os.MkdirAll(filepath.Join("dump", swzName), os.ModePerm)
 
-	newData := Decrypt(input, key)
-	fmt.Println("total files:", len(newData))
+	data := Decrypt(input, key)
+	fmt.Println("total files:", len(data))
 
-	for _, v := range newData {
-		var fileName string
-		if v[0] == '<' {
-			if v[0:10] == "<LevelDesc" {
-				fileName = strings.Split(strings.Split(v, "LevelName=\"")[1], "\"")[0] + ".xml"
-			} else {
-				fileName = strings.TrimPrefix(strings.Split(v, ">")[0], "<") + ".xml"
-			}
-		} else {
-			fileName = strings.Split(v, "\n")[0] + ".csv"
-		}
-		os.WriteFile(filepath.Join("dump", swzName, fileName), []byte(v), os.ModePerm)
+	dest := filepath.Join("dump", swzName)
+	fmt.Println("writing to:", dest)
+	for _, v := range data {
+		fileName := getFileName(v)
+		os.WriteFile(filepath.Join(dest, fileName), []byte(v), os.ModePerm)
 	}
 }
 
@@ -47,7 +39,7 @@ func Decrypt(input []byte, key uint32) []string {
 
 	fmt.Println("seed: " + fmt.Sprint(seed))
 
-	rand := newWell512(seed ^ key)
+	rand := newPrng(seed ^ key)
 
 	var hash uint32 = 0x2DF4A1CD
 	hash_rounds := key%0x1F + 5
@@ -78,7 +70,18 @@ func Decrypt(input []byte, key uint32) []string {
 	return results
 }
 
-func readStringEntry(reader *bytes.Reader, rand *well512) (string, error) {
+func getFileName(content string) string {
+	if content[0] == '<' {
+		if content[0:10] == "<LevelDesc" {
+			return strings.Split(strings.Split(content, "LevelName=\"")[1], "\"")[0] + ".xml"
+		}
+		return strings.TrimPrefix(strings.Split(content, ">")[0], "<") + ".xml"
+	}
+
+	return strings.Split(content, "\n")[0] + ".csv"
+}
+
+func readStringEntry(reader *bytes.Reader, rand *prng) (string, error) {
 
 	if reader.Len() < 4 {
 		return "", io.EOF

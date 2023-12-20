@@ -1,18 +1,18 @@
 package swz
 
-type well512 struct {
+type prng struct {
 	index int32
 	state [16]uint32
 }
 
-func newWell512(seed uint32) *well512 {
-	w := new(well512)
+func newPrng(seed uint32) *prng {
+	w := new(prng)
 	w.index = 0
 	w.setSeed(seed)
 	return w
 }
 
-func (w *well512) setSeed(seed uint32) {
+func (w *prng) setSeed(seed uint32) {
 	w.index = 0
 
 	w.state[0] = seed
@@ -22,7 +22,7 @@ func (w *well512) setSeed(seed uint32) {
 	}
 }
 
-func (w *well512) nextUint() uint32 {
+func (w *prng) nextUint() uint32 {
 	var a, b, c, d uint32
 
 	a = w.state[w.index]
